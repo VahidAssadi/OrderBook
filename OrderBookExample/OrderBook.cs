@@ -9,23 +9,52 @@ namespace OrderBookExample
 {
     public class OrderBook
     {
-        public void Add(MessageType messageType, Order order)
+        public void Add(Order order)
         {
-
+            // if price is the same must add to it otherwise must create new row
+            var corder = Orders.Find(p => p.Price == order.Price);
+            if (corder is not null)
+            {
+                corder.Price += order.Price;
+                corder.Qty += order.Qty;
+            }
+            else
+            {
+                Orders.Add(order);
+            }
         }
 
-        public void Cancel(MessageType messageType, int orderId)
+        public void Cancel(int orderId)
         {
+            var order = Orders.Find(p => p.Id == orderId) ?? throw new Exception("not found");
+            Orders.Remove(order);
+
         }
-        public IEnumerable<Order> GetTopOfBook()
+        public List<BuySell> GetTopOfBook()
         {
-            // Buy      Sell           
-            // 4@10     18@16   <-------- Top of Book
-            // 3@8      2@20 
-            // 3@2      2@24 
+            var groupedOrders = Orders
+                                .GroupBy(o => o.OrderType)
+                                .ToDictionary(
+                                    g => g.Key,
+                                    g => g.Key == OrderType.s
+                                        ? g.OrderByDescending(o => o.Price).ToList()
+                                        : g.OrderBy(o => o.Price).ToList());
+
+            var buyOrders = groupedOrders.ContainsKey(OrderType.b) ? groupedOrders[OrderType.b] : new List<Order>();
+            var sellOrders = groupedOrders.ContainsKey(OrderType.s) ? groupedOrders[OrderType.s] : new List<Order>();
+
+            var result = new List<BuySell>();
+
+            for (int i = 0; i < Math.Max(buyOrders.Count, sellOrders.Count); i++)
+            {
+                var buy = i < buyOrders.Count ? $"{buyOrders[i].Qty}@{buyOrders[i].Price}" : string.Empty;
+                var sell = i < sellOrders.Count ? $"{sellOrders[i].Qty}@{sellOrders[i].Qty}" : string.Empty;
+
+                result.Add(new BuySell { Buy = buy, Sell = sell });
+            }
+            return result;
 
 
-            throw new NotImplementedException();
         }
         public List<Order> Orders { get; set; } = [
 
