@@ -9,61 +9,67 @@ namespace OrderBookExample
 {
     public class OrderBook
     {
+        private List<Order> _orders { get; set; } = new();
+        #region ExposedFuctions
         public void Add(Order order)
         {
-            // if price is the same must add to it otherwise must create new row
-            var corder = Orders.Find(p => p.Price == order.Price);
+            var corder = GetOrderByPrice(order.Price);
+
             if (corder is not null)
             {
-                corder.Price += order.Price;
-                corder.Qty += order.Qty;
+                corder.IncreaseHighestPriceQty(order.Qty);
+                //IncreaseHighstPriceQty(order.Qty);
             }
             else
             {
-                Orders.Add(order);
+                _orders.Add(order);
             }
         }
-
         public void Cancel(int orderId)
         {
-            var order = Orders.Find(p => p.Id == orderId) ?? throw new Exception("not found");
-            Orders.Remove(order);
+            var order = _orders.Find(p => p.Id == orderId) ?? throw new Exception("not found");
+            _orders.Remove(order);
 
         }
-        public List<BuySell> GetTopOfBook()
+
+
+        //"BuyQty@BuyPrice : SellQty@SellPrice"
+        public List<(string, string)> GetOrders()
         {
-            var groupedOrders = Orders
+            var groupedOrders = _orders
                                 .GroupBy(o => o.OrderType)
                                 .ToDictionary(
                                     g => g.Key,
                                     g => g.Key == OrderType.s
-                                        ? g.OrderByDescending(o => o.Price).ToList()
-                                        : g.OrderBy(o => o.Price).ToList());
+                                        ? g.OrderBy(o => o.Price).ToList()
+                                        : g.OrderByDescending(o => o.Price).ToList());
 
-            var buyOrders = groupedOrders.ContainsKey(OrderType.b) ? groupedOrders[OrderType.b] : new List<Order>();
-            var sellOrders = groupedOrders.ContainsKey(OrderType.s) ? groupedOrders[OrderType.s] : new List<Order>();
+            var buyOrders = groupedOrders.ContainsKey(OrderType.b) ? groupedOrders[OrderType.b] : [];
+            var sellOrders = groupedOrders.ContainsKey(OrderType.s) ? groupedOrders[OrderType.s] : [];
 
-            var result = new List<BuySell>();
+            var result = new List<(string, string)>();
 
             for (int i = 0; i < Math.Max(buyOrders.Count, sellOrders.Count); i++)
             {
                 var buy = i < buyOrders.Count ? $"{buyOrders[i].Qty}@{buyOrders[i].Price}" : string.Empty;
-                var sell = i < sellOrders.Count ? $"{sellOrders[i].Qty}@{sellOrders[i].Qty}" : string.Empty;
+                var sell = i < sellOrders.Count ? $"{sellOrders[i].Qty}@{sellOrders[i].Price}" : string.Empty;
 
-                result.Add(new BuySell { Buy = buy, Sell = sell });
+                result.Add(new(buy, sell));
             }
             return result;
-
-
         }
-        public List<Order> Orders { get; set; } = [
 
-            new() { Id = 1, OrderType = OrderType.s, Price = 15, Qty = 5  },
-            new() { Id = 1, OrderType = OrderType.s, Price = 5,  Qty = 3  },
-            new() { Id = 1, OrderType = OrderType.s, Price = 45, Qty = 10 },
-            new() { Id = 1, OrderType = OrderType.b, Price = 25, Qty = 8  },
-            new() { Id = 1, OrderType = OrderType.b, Price = 30, Qty = 6  },
-            new() { Id = 1, OrderType = OrderType.b, Price = 10, Qty = 4  }
-        ];
+        public (string, string) GetTopOfBook()
+        {
+            return GetOrders().First();
+        }
+        #endregion
+
+        #region privateMethods
+        private Order? GetOrderByPrice(int price)
+        {
+            return _orders.FirstOrDefault(p => p.Price == price);
+        }
+        #endregion
     }
 }
