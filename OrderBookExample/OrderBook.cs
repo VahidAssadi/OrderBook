@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace OrderBookExample
 {
-    public class OrderBook
+    public class OrderBook : IOrderBook
     {
-        private List<Order> _orders { get; set; } = new();
         #region ExposedFuctions
         public void Add(Order order)
         {
@@ -18,7 +17,6 @@ namespace OrderBookExample
             if (corder is not null)
             {
                 corder.IncreaseHighestPriceQty(order.Qty);
-                //IncreaseHighstPriceQty(order.Qty);
             }
             else
             {
@@ -29,23 +27,19 @@ namespace OrderBookExample
         {
             var order = _orders.Find(p => p.Id == orderId) ?? throw new Exception("not found");
             _orders.Remove(order);
-
         }
-
-
-        //"BuyQty@BuyPrice : SellQty@SellPrice"
-        public List<(string, string)> GetOrders()
+        public IEnumerable<(string, string)> GetOrders()
         {
             var groupedOrders = _orders
                                 .GroupBy(o => o.OrderType)
                                 .ToDictionary(
                                     g => g.Key,
-                                    g => g.Key == OrderType.s
+                                    g => g.Key == OrderSide.sell
                                         ? g.OrderBy(o => o.Price).ToList()
                                         : g.OrderByDescending(o => o.Price).ToList());
 
-            var buyOrders = groupedOrders.ContainsKey(OrderType.b) ? groupedOrders[OrderType.b] : [];
-            var sellOrders = groupedOrders.ContainsKey(OrderType.s) ? groupedOrders[OrderType.s] : [];
+            var buyOrders = groupedOrders.ContainsKey(OrderSide.buy) ? groupedOrders[OrderSide.buy] : [];
+            var sellOrders = groupedOrders.ContainsKey(OrderSide.sell) ? groupedOrders[OrderSide.sell] : [];
 
             var result = new List<(string, string)>();
 
@@ -66,6 +60,7 @@ namespace OrderBookExample
         #endregion
 
         #region privateMethods
+        private List<Order> _orders { get; set; } = [];
         private Order? GetOrderByPrice(int price)
         {
             return _orders.FirstOrDefault(p => p.Price == price);

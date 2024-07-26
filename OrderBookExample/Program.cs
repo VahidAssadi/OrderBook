@@ -1,12 +1,12 @@
-﻿// See https://aka.ms/new-console-template for more information
-using OrderBookExample;
+﻿using OrderBookExample;
 
-var model = new OrderBook();
-model.Add(new(id: 1, orderType: OrderType.s, price: 5, qty: 3));
-model.Add(new(id: 2, orderType: OrderType.s, price: 45, qty: 10));
-model.Add(new(id: 3, orderType: OrderType.b, price: 25, qty: 8));
-model.Add(new(id: 4, orderType: OrderType.b, price: 30, qty: 6));
-model.Add(new(id: 5, orderType: OrderType.b, price: 10, qty: 4));            
+var model = ObjectFactory.Create();
+
+model.Add(new(id: 1, orderType: OrderSide.sell, price: 5, qty: 3));
+model.Add(new(id: 2, orderType: OrderSide.sell, price: 45, qty: 10));
+model.Add(new(id: 3, orderType: OrderSide.buy, price: 25, qty: 8));
+model.Add(new(id: 4, orderType: OrderSide.buy, price: 30, qty: 6));
+model.Add(new(id: 5, orderType: OrderSide.buy, price: 10, qty: 4));
 
 var result = model.GetTopOfBook();
 var AllOrders = model.GetOrders();

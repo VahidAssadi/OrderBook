@@ -2,11 +2,11 @@
 
 namespace OrderBookExample
 {
-    public enum OrderType
+    public enum OrderSide
     {
         [Display(Name = "Buy")]
-        b,
+        buy,
         [Display(Name = "Sell")]
-        s
+        sell
     }
 }
